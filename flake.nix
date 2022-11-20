@@ -5,7 +5,10 @@
 
   # Declaration of external resources
   # =================================
-
+  inputs.fenix = {
+    url = "github:nix-community/fenix";
+    inputs.nixpkgs.follows = "floxpkgs/nixpkgs";
+  };
   # =================================
 
   outputs = args @ {floxpkgs, ...}: floxpkgs.project args (_: {});

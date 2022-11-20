@@ -1,35 +1,86 @@
-# Replace "stdenv" with the namespace or name of your language's builder
-{ self,
-  stdenv,
+{
+  self,
+  inputs,
   lib,
-  fetchurl,
+  callPackage,
+  rustPlatform,
+  hostPlatform,
+  # you can add imports here
+  openssl,
+  pkg-config,
+  libiconv,
+  darwin,
+  evcxr,
+  cargo-tarpaulin,
+  clippy,
+  rustfmt,
 }:
 
-stdenv.mkDerivation rec {
-  pname = "ockam";
-  version = "0.77.0";
-  MACOSX_DEPLOYMENT_TARGET = true;
+let
+  cargo-tarpaulin-develop =
+    if hostPlatform.isDarwin then
+      callPackage ./cargo-tarpaulin-darwin.nix { inherit inputs; }
+    else cargo-tarpaulin;
 
-  sourceRoot = ".";
+in rustPlatform.buildRustPackage rec {
+  # this is necessary for vs code / rust-analyzer to find the rust-src library
+  RUST_SRC_PATH = "${rustPlatform.rustLibSrc}";
+  pname = "edits";
+  version = "1.0.0";
+  src = self; # + "/src";
 
-  src = fetchurl {
-    url = "https://github.com/build-trust/ockam/releases/download/ockam_v${version}/ockam.x86_64-apple-darwin";
-    sha256 = "sha256-Kjt3rXFu+AI8cSVxrerlaLwIq3K5dmgO9pT0a+Lqjjs=";
-    executable = true;
+  cargoLock = {
+    lockFile = self + "/Cargo.lock";
+    # The hash of each dependency that uses a git source must be specified.
+    # The hash can be found by setting it to lib.fakeSha256
+    # as shown below and running flox build.
+    # The build will fail but output the expected sha, which can then be added
+    # here
+    outputHashes = {
+      #   "dependency-0.0.0" = lib.fakeSha256;
+    };
   };
 
-  phases = ["installPhase"];
-  installPhase = ''
-    mkdir -p $out/bin
-    cp $src $out/bin/ockam
-    chmod +x $out/bin/ockam
-  '';
+
+
+  # Non-Rust runtime dependencies (most likely libraries) of your project can
+  # be added in buildInputs.
+  # Make sure to import any additional dependencies above
+  buildInputs =
+    [
+      openssl.dev
+    ]
+    # Platform specific dependencies can be added as well
+    # For MacOS
+    ++ lib.optional hostPlatform.isDarwin [
+      # If you're getting linker errors about missing libraries, you can add
+      # them here
+      libiconv
+      # If you're getting linker errors about missing frameworks, you can add
+      # apple frameworks here
+      darwin.apple_sdk.frameworks.Security
+    ]
+    # and Linux
+    ++ lib.optional hostPlatform.isLinux [ ]
+    ;
+
+
+  # Add runtime dependencies required by packages that depend on this package
+  # to propagatedBuildInputs.
+  propagatedBuildInputs = [];
+
+  # Add buildtime dependencies (not required at runtime) to nativeBuildInputs.
+  nativeBuildInputs = [
+    pkg-config # for openssl
+    evcxr
+    clippy
+    rustfmt
+    cargo-tarpaulin-develop
+  ];
 
   meta = with lib; {
-    homepage = "https://github.com/build-trust/ockam/";
-    description = "ockam binary";
-    platforms = platforms.darwin;
-    architectures = [ "x86" ];
+    description = "ockam";
+    homepage = "https://github.com/etorreborre/ockam";
   };
 
 }
