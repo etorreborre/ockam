@@ -8,7 +8,7 @@ rustPlatform.buildRustPackage rec {
     owner = "xd009642";
     repo = "tarpaulin";
     rev = version;
-    sha256 = "sha256-MvQQiEIXPkFsG9omMPk5Se3OujYuOl/ePQFiGwoPlNw";
+    sha256 = "sha256-x7dGL+3VwaNPadKOaqS34cudAgk1tNb9f/R44OfvWqo=";
   };
 
   nativeBuildInputs = [
@@ -25,7 +25,7 @@ rustPlatform.buildRustPackage rec {
     wrapProgram $out/bin/cargo-tarpaulin --set PATH "${inputs.fenix.packages.latest.cargo}/bin:${inputs.fenix.packages.latest.rustc}/bin:$PATH"
   '';
 
-  cargoSha256 = "sha256-AfvY8vC9uh3HwJc3y6GsGqsJmjkVcCJ2gHKdMSTCw84=";
+  cargoSha256 = "sha256-GFhAgA+2EvuwjD8+cMUoqKS5fk61h8LkzdkHWEfybB8=";
   #checkFlags = [ "--test-threads" "1" ];
   doCheck = false;
 

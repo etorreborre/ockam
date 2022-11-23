@@ -25,7 +25,7 @@ let
 in rustPlatform.buildRustPackage rec {
   # this is necessary for vs code / rust-analyzer to find the rust-src library
   RUST_SRC_PATH = "${rustPlatform.rustLibSrc}";
-  pname = "edits";
+  pname = "ockam";
   version = "1.0.0";
   src = self; # + "/src";
 
@@ -58,6 +58,9 @@ in rustPlatform.buildRustPackage rec {
       libiconv
       # If you're getting linker errors about missing frameworks, you can add
       # apple frameworks here
+      darwin.apple_sdk.frameworks.AppKit
+      darwin.apple_sdk.frameworks.DiskArbitration
+      darwin.apple_sdk.frameworks.Foundation
       darwin.apple_sdk.frameworks.Security
     ]
     # and Linux
