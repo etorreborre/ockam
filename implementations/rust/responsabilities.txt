@@ -1,0 +1,96 @@
+ - had a look at the ADRs
+ - used cargo-tree to check the dependencies between packages
+ - started documenting the responsability of each package starting with the bottom, and the README of each package
+ - arrived at ockam_api decided to switch to top-down
+
+ockam-macros:
+ - derive implementations for Message, Node `main`, and node/vault tests
+ -> arguably this should be defined with the corresponding concepts (Message is in ockam_core)
+    (there is already a macro file in routing)
+
+ockam-core:
+  - main types
+    - Worker
+    - routing
+      - Address: transport type + vec of u8 (binary encoding of a string)
+        -> transport types
+           - 0 = LOCAL
+           - 1 = TCP (defined in ockam_transport_tcp)
+           - 2 = UCP (defined in ockam_transport_udp)
+           - 3 = WS (defined in ockam_transport_websocket)
+           should that be a closed enum?
+           what if people define transports with overlapping numbers?
+        -> not a lot of validation on Addresses
+      - Message: basically anything that can be encoded/decoded
+      - RelayMessage: addressed to a relay (how the onward route relates to the onward route of the included LocalMessage?)
+      - TransportMessage: an outgoing route, a payload and a return route (populated by routers)
+      - Route: list of Addresses. It says "A full route to a peer.", but is there a moment where we build larger routes from smaller ones?
+      - Routed: a message, an address and some local info from a LocalMessage: are we duplicating the payload just to get the local info?
+      - Mailbox = Addreess with access control
+      - pub type Encoded = Vec<u8>; but not used everywhere -> also does not say what's the encoding
+      - ProtocolId: deprecated, replaced my Metadata in OckamMessage (remove?, move to a separate file?)
+      - The Any message type
+        -> example given for the middleware seems a bit expensive to me. We deserialize the whole string to see if it's utf-8
+           the purpose of the example is to show a case where we don't want to inspect the payload
+
+    - access control: policies for accepting a relay message (and set on a Mailbox which is an Address with access control policies for in / out messages)
+      - 2 flavors: identities (in ockam_identities), node (in ockam_node)
+    - vault:
+       - types: base types Key, SecretType, key id
+       - verifier: interface to verify a signature
+       - storage: interface to store/load/delete by key id
+       - symmetric vault: encrypt/decrypt values
+       - asymmetric vault: public/private encryption / decryption
+       - hasher: make SHA256 hashes
+       - secret vault: interface to store secrets
+    - api:
+      - Request / Response / Status codes modelled as REST/HTTP methods -> more like headers
+      - the body is in the Request/Response builder
+      -
+    - processor (interface)
+      - stateful / resourceful (initialize, process *, shutdown) + synchronous
+      - input = Context, output = ()
+      - the context is actually: mailboxes + sender(node message) + handle + receiver(relay message)
+
+    - worker (interface)
+      - stateful / resourceful (initialize, process *, shutdown) + asynchronous
+      - handles a specific type of message
+      - supports authorization (if unauthorize drop and log in the worker)
+
+- ockam_node:
+  - node: starting node creates a Context and an executor
+    - one node address, an incoming mailbox, an outgoing mailbox
+  - executor: uses the Runtime to spawn task and has a router (a worker) + collect metrics
+    - seems to switch between worker execution and routing execution
+  - 2 address types: worker and processor
+  - NodeMessage: types of messages processed by a Node: start/stop worker/processor, list workers etc...
+  - Router: router state, internal addresses, external addresses, receiver from messages from node
+    - a Router handles a node message and sends a Reply
+    -> lack of symmetry NodeMessage but RouterReply
+  - SmallSender/SmallReceiver are used on a Channel(1) so they exchange messages one by one
+
+- ockam_api:
+  - server
+  - sessions
+  - Medic monitor sessions
+
+
+Top-down:
+
+ - code example
+   - found the node_attribute macro in ockam_macros/lib.rs
+   - didn't find the worker macro
+
+ - one TcpTransport per node, it's a router. Can listen to several ports, and connect to several other outgoing ports
+   - we can create an Inlet, an Outlet, the pair is a Portal
+
+ - A Vault stores secrets in memory and uses crypto to encrypt / decrypt messages
+ - An Identity is parametrized by a Vault and represents a user
+   ->  we are passing the whole Context around which is a bit dubious
+   -> in ockam_identity
+ - AuthenticatedStorage is used to store attributes about an identity, with their key
+ - bob.create_secure_channel_listener
+   - this creates IdentityChannelListener which is a decryptor worker
+   -> the whole thing seems to be an actor model
+
+ -> asymmetric functions: TcpTransport::create(&ctx).await?; / ctx.start_worker("echoer", Echoer).await?; (maybe, not sure)

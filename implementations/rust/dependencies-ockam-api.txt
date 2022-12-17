@@ -1,0 +1,14 @@
+ockam_api v0.20.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_api)
+├── minicbor v0.18.0
+├── nix v0.26.1
+├── ockam v0.77.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam)
+├── ockam_abac v0.11.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_abac) (*)
+├── ockam_core v0.71.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_core) (*)
+├── ockam_identity v0.65.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_identity) (*)
+├── ockam_multiaddr v0.11.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_multiaddr)
+├── ockam_node v0.74.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_node) (*)
+├── ockam_vault v0.67.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_vault) (*)
+[dev-dependencies]
+├── ockam_api v0.20.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_api) (*)
+├── ockam_macros v0.25.0 (proc-macro) (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_macros) (*)
+├── ockam_transport_tcp v0.72.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_transport_tcp) (*)

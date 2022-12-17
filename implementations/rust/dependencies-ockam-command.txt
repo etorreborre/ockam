@@ -1,0 +1,6 @@
+ockam_command v0.77.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_command)
+├── ockam v0.77.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam)
+[dev-dependencies]
+├── ockam_api v0.20.0 (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_api) (*)
+├── ockam_macros v0.25.0 (proc-macro) (/Users/etorreborre/projects/rust/ockam/implementations/rust/ockam/ockam_macros) (*)
+└── tempfile v3.3.0 (*)
