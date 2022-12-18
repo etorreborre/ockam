@@ -3,10 +3,10 @@ use crate::types::Action;
 use minicbor::{Decode, Encode};
 use crate::eval::eval;
 use crate::env::{Env};
-use crate::error::EvalError;
+use crate::error::{EvalError, ParseError};
+use core::{str::FromStr};
 use std::fmt;
 use std::fmt::{Formatter, Display};
-
 #[cfg(feature = "tag")]
 use ockam_core::TypeTag;
 
@@ -64,6 +64,31 @@ impl Policy {
         }
     }
 }
+
+impl TryFrom<&str> for Policy {
+    type Error = ParseError;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        Expr::try_from(input).map(Policy::new)
+    }
+}
+
+impl TryFrom<String> for Policy {
+    type Error = ParseError;
+
+    fn try_from(input: String) -> Result<Self, Self::Error> {
+        Expr::try_from(input).map(Policy::new)
+    }
+}
+
+impl FromStr for Policy {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Expr::try_from(s).map(Policy::new)
+    }
+}
+
 
 #[derive(Debug, Decode, Encode)]
 #[rustfmt::skip]

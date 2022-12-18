@@ -2,7 +2,7 @@ use crate::util::{extract_address_value, node_rpc, Rpc};
 use crate::{help, CommandGlobalOpts, Result};
 use clap::{Args, Subcommand};
 use ockam::Context;
-use ockam_abac::{Action, Expr, Policy, PolicyList, Resource};
+use ockam_abac::{Action, Policy, PolicyList, Resource};
 use ockam_core::api::Request;
 
 const HELP_DETAIL: &str = "";
@@ -28,7 +28,7 @@ pub enum PolicySubcommand {
         action: Action,
 
         #[arg(short, long)]
-        expression: Expr,
+        policy: Policy,
     },
     Get {
         /// Node on which to start the tcp inlet.
@@ -71,9 +71,9 @@ impl PolicyCommand {
 #[rustfmt::skip]
 async fn rpc(ctx: Context, (opts, cmd): (CommandGlobalOpts, PolicyCommand)) -> Result<()> {
     match cmd.subcommand {
-        PolicySubcommand::Set { at, resource, action, expression } => {
+        PolicySubcommand::Set { at, resource, action, policy } => {
             let node = extract_address_value(&at)?;
-            let bdy = Policy::new(expression);
+            let bdy = policy;
             let req = Request::post(policy_path(&resource, &action)).body(bdy);
             let mut rpc = Rpc::background(&ctx, &opts, &node)?;
             rpc.request(req).await?;
