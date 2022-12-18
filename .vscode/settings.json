@@ -4,5 +4,17 @@
     "**/.pnp.*": true
   },
   "typescript.tsdk": "implementations/typescript/.yarn/sdks/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "cSpell.words": [
+    "abac",
+    "cbor",
+    "errcode",
+    "initialised",
+    "lmdb",
+    "minicbor",
+    "multiaddr",
+    "nodemanager",
+    "rustfmt",
+    "typechecker"
+  ]
 }
