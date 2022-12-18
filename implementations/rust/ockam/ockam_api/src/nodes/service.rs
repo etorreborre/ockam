@@ -18,6 +18,7 @@ use ockam_multiaddr::{MultiAddr, Protocol};
 use ockam_node::tokio;
 use ockam_node::tokio::task::JoinHandle;
 use ockam_vault::Vault;
+use ockam_abac::PolicyStorage;
 use std::collections::BTreeMap;
 use std::error::Error as _;
 use std::path::PathBuf;
@@ -109,7 +110,7 @@ pub struct NodeManager {
     pub(crate) registry: Registry,
     sessions: Arc<Mutex<Sessions>>,
     medic: JoinHandle<Result<(), ockam_core::Error>>,
-    policies: LmdbStorage,
+    policies: Box<dyn PolicyStorage>,
     token: Option<OneTimeCode>,
 }
 
@@ -255,7 +256,7 @@ impl NodeManager {
                 tokio::spawn(medic.start(ctx))
             },
             sessions,
-            policies: policies_storage,
+            policies: Box::new(policies_storage),
             token: projects_options.token,
         };
 

@@ -1,7 +1,6 @@
-use crate::nodes::models::policy::{Policy, PolicyList};
 use either::Either;
 use minicbor::Decoder;
-use ockam_abac::{Action, PolicyStorage, Resource};
+use ockam_abac::{Action, Policy, PolicyList, Resource};
 use ockam_core::api::{Error, Request, Response, ResponseBuilder};
 use ockam_core::Result;
 
@@ -18,7 +17,7 @@ impl NodeManager {
         let p: Policy = dec.decode()?;
         let r = Resource::new(resource);
         let a = Action::new(action);
-        self.policies.set_policy(&r, &a, p.expression()).await?;
+        self.policies.set_policy(&r, &a, &p).await?;
         Ok(Response::ok(req.id()))
     }
 
@@ -30,8 +29,8 @@ impl NodeManager {
     ) -> Result<Either<ResponseBuilder<Error<'a>>, ResponseBuilder<Policy>>> {
         let r = Resource::new(resource);
         let a = Action::new(action);
-        if let Some(e) = self.policies.get_policy(&r, &a).await? {
-            Ok(Either::Right(Response::ok(req.id()).body(Policy::new(e))))
+        if let Some(p) = self.policies.get_policy(&r, &a).await? {
+            Ok(Either::Right(Response::ok(req.id()).body(p)))
         } else {
             let mut err = Error::new(req.path()).with_message("policy not found");
             if let Some(m) = req.method() {
@@ -48,7 +47,7 @@ impl NodeManager {
     ) -> Result<ResponseBuilder<PolicyList>> {
         let r = Resource::new(res);
         let p = self.policies.policies(&r).await?;
-        Ok(Response::ok(req.id()).body(PolicyList::new(p)))
+        Ok(Response::ok(req.id()).body(p))
     }
 
     pub(super) async fn del_policy(

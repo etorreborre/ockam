@@ -13,7 +13,7 @@ use ockam::compat::tokio::time::timeout;
 use ockam::tcp::{InletOptions, OutletOptions};
 use ockam::{Address, Result};
 use ockam_abac::expr::{and, eq, ident, str};
-use ockam_abac::{Action, Env, PolicyAccessControl, PolicyStorage, Resource};
+use ockam_abac::{Action, Env, Policy, PolicyAccessControl, Resource};
 use ockam_core::api::{Request, Response, ResponseBuilder};
 use ockam_core::{AccessControl, AllowAll};
 use ockam_identity::IdentityIdentifier;
@@ -46,7 +46,7 @@ impl NodeManager {
                     eq([ident("resource.project_id"), ident("subject.project_id")]),
                     eq([ident("subject.role"), str("member")]),
                 ]);
-                self.policies.set_policy(r, a, &fallback).await?
+                self.policies.set_policy(r, a, &(Policy::new(fallback))).await?
             }
             let store = self.authenticated_storage.clone();
             let policies = self.policies.clone();

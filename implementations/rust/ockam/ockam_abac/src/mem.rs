@@ -1,4 +1,4 @@
-use crate::expr::Expr;
+use crate::policy::{Policy, PolicyList};
 use crate::traits::PolicyStorage;
 use crate::types::{Action, Resource};
 use core::fmt;
@@ -10,6 +10,7 @@ use ockam_core::compat::vec::Vec;
 use ockam_core::Result;
 
 #[derive(Default)]
+#[derive(Clone)]
 pub struct Memory {
     pub(crate) inner: Arc<RwLock<Inner>>,
 }
@@ -29,8 +30,9 @@ impl Memory {
 }
 
 #[derive(Default)]
+#[derive(Clone)]
 pub struct Inner {
-    policies: BTreeMap<Resource, BTreeMap<Action, Expr>>,
+    policies: BTreeMap<Resource, BTreeMap<Action, Policy>>,
 }
 
 impl Inner {
@@ -47,18 +49,18 @@ impl Inner {
         }
     }
 
-    fn get_policy(&self, r: &Resource, a: &Action) -> Option<Expr> {
+    fn get_policy(&self, r: &Resource, a: &Action) -> Option<Policy> {
         self.policies.get(r).and_then(|p| p.get(a).cloned())
     }
 
-    fn set_policy(&mut self, r: &Resource, a: &Action, p: &Expr) {
+    fn set_policy(&mut self, r: &Resource, a: &Action, p: &Policy) {
         self.policies
             .entry(r.clone())
             .or_insert_with(BTreeMap::new)
             .insert(a.clone(), p.clone());
     }
 
-    fn policies(&self, r: &Resource) -> Vec<(Action, Expr)> {
+    fn policies(&self, r: &Resource) -> Vec<(Action, Policy)> {
         if let Some(p) = self.policies.get(r) {
             p.iter()
                 .map(|(k, v)| (k.clone(), v.clone()))
@@ -76,27 +78,27 @@ impl PolicyStorage for Memory {
         Ok(())
     }
 
-    async fn get_policy(&self, r: &Resource, a: &Action) -> Result<Option<Expr>> {
+    async fn get_policy(&self, r: &Resource, a: &Action) -> Result<Option<Policy>> {
         Ok(self.inner.read().unwrap().get_policy(r, a))
     }
 
-    async fn set_policy(&self, r: &Resource, a: &Action, p: &Expr) -> Result<()> {
+    async fn set_policy(&self, r: &Resource, a: &Action, p: &Policy) -> Result<()> {
         self.inner.write().unwrap().set_policy(r, a, p);
         Ok(())
     }
 
-    async fn policies(&self, r: &Resource) -> Result<Vec<(Action, Expr)>> {
-        Ok(self.inner.write().unwrap().policies(r))
+    async fn policies(&self, r: &Resource) -> Result<PolicyList> {
+        Ok(PolicyList::new(self.inner.write().unwrap().policies(r)))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::env::Env;
-    use crate::eval::eval;
     use crate::expr::{int, seq, str};
     use crate::mem::Memory;
     use crate::parser::parse;
+    use crate::policy::{Policy};
     use crate::types::{Action, Resource};
 
     #[test]
@@ -114,7 +116,7 @@ mod tests {
         store.inner.write().unwrap().set_policy(
             &resource,
             &action,
-            &parse(condition).unwrap().unwrap(),
+            &(Policy::new(parse(condition).unwrap().unwrap())),
         );
 
         let mut e = Env::new();
@@ -129,6 +131,6 @@ mod tests {
             .unwrap()
             .get_policy(&resource, &action)
             .unwrap();
-        assert!(eval(&policy, &e).unwrap().is_true())
+        assert!(policy.evaluate_with_environment(&e).unwrap().unwrap())
     }
 }

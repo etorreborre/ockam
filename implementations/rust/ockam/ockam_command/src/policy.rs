@@ -2,8 +2,7 @@ use crate::util::{extract_address_value, node_rpc, Rpc};
 use crate::{help, CommandGlobalOpts, Result};
 use clap::{Args, Subcommand};
 use ockam::Context;
-use ockam_abac::{Action, Expr, Resource};
-use ockam_api::nodes::models::policy::{Policy, PolicyList};
+use ockam_abac::{Action, Expr, Policy, PolicyList, Resource};
 use ockam_core::api::Request;
 
 const HELP_DETAIL: &str = "";
@@ -101,8 +100,8 @@ async fn rpc(ctx: Context, (opts, cmd): (CommandGlobalOpts, PolicyCommand)) -> R
             let mut rpc = Rpc::background(&ctx, &opts, &node)?;
             rpc.request(req).await?;
             let pol: PolicyList = rpc.parse_response()?;
-            for (a, e) in pol.expressions() {
-                println!("{resource}/{a}: {e}")
+            for (a, p) in pol.policies() {
+                println!("{resource}/{a}: {p}")
             }
         }
     }

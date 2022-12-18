@@ -1,7 +1,7 @@
 use core::str;
 use lmdb::{Cursor, Database, Environment, Transaction};
 use minicbor::{Decode, Encode};
-use ockam_abac::{Action, Expr, PolicyStorage, Resource};
+use ockam_abac::{Action, Policy, PolicyList, PolicyStorage, Resource};
 use ockam_core::async_trait;
 use ockam_core::errcode::{Kind, Origin};
 use ockam_core::{Error, Result};
@@ -101,25 +101,25 @@ impl AuthenticatedStorage for LmdbStorage {
 
 /// Policy storage entry.
 ///
-/// Used instead of storing plain `Expr` values to allow for additional
+/// Used instead of storing plain `Policy` values to allow for additional
 /// metadata, versioning, etc.
 #[derive(Debug, Encode, Decode)]
 #[rustfmt::skip]
 struct PolicyEntry<'a> {
-    #[b(0)] expr: Cow<'a, Expr>
+    #[b(0)] policy: Cow<'a, Policy>
 }
 
 #[async_trait]
 impl PolicyStorage for LmdbStorage {
-    async fn get_policy(&self, r: &Resource, a: &Action) -> Result<Option<Expr>> {
+    async fn get_policy(&self, r: &Resource, a: &Action) -> Result<Option<Policy>> {
         let d = self.clone();
         let k = format!("{r}:{a}");
         let t = move || {
             let r = d.env.begin_ro_txn().map_err(map_lmdb_err)?;
             match r.get(d.map, &k) {
                 Ok(value) => {
-                    let e: PolicyEntry = minicbor::decode(value)?;
-                    Ok(Some(e.expr.into_owned()))
+                    let pe: PolicyEntry = minicbor::decode(value)?;
+                    Ok(Some(pe.policy.into_owned()))
                 }
                 Err(lmdb::Error::NotFound) => Ok(None),
                 Err(e) => Err(map_lmdb_err(e)),
@@ -128,9 +128,9 @@ impl PolicyStorage for LmdbStorage {
         task::spawn_blocking(t).await.map_err(map_join_err)?
     }
 
-    async fn set_policy(&self, r: &Resource, a: &Action, c: &Expr) -> Result<()> {
+    async fn set_policy(&self, r: &Resource, a: &Action, c: &Policy) -> Result<()> {
         let v = minicbor::to_vec(PolicyEntry {
-            expr: Cow::Borrowed(c),
+            policy: Cow::Borrowed(c),
         })?;
         self.write(format!("{r}:{a}"), v).await
     }
@@ -139,7 +139,7 @@ impl PolicyStorage for LmdbStorage {
         self.delete(format!("{r}:{a}")).await
     }
 
-    async fn policies(&self, r: &Resource) -> Result<Vec<(Action, Expr)>> {
+    async fn policies(&self, r: &Resource) -> Result<PolicyList> {
         let d = self.clone();
         let r = r.clone();
         let t = move || {
@@ -154,14 +154,14 @@ impl PolicyStorage for LmdbStorage {
                         break;
                     }
                     let x: PolicyEntry = minicbor::decode(v)?;
-                    xs.push((Action::new(a), x.expr.into_owned()))
+                    xs.push((Action::new(a), x.policy.into_owned()))
                 } else {
                     log::warn!(key = %ks, "malformed key in policy database")
                 }
             }
             Ok(xs)
         };
-        task::spawn_blocking(t).await.map_err(map_join_err)?
+        task::spawn_blocking(t).await.map_err(map_join_err).map(|r| r.map(PolicyList::new))?
     }
 }
 
