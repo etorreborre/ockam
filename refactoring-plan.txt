@@ -3,7 +3,7 @@ Project
 
 Research, prototype and propose a plan to improve the design of ockam_command and ockam_api crates.
 
-Analysis
+Overview
 --------
 
 The ockam_command crate main responsabilities are to:
@@ -51,36 +51,48 @@ The ockam_api create main responsabilities are to
 
 As such, all the code in ockam_api is useful since it encapsulates, at a high-level, the main features of the platform.
 On the other hand it is not very reusable because one data structure, the `NodeManager` contains all the data necessary to
-support all the use cases.
+support all the use cases. We also cannot very easily test the `NodeManager` because it requires a very complete environment to
+be setup first.
 
 The purpose of refactoring the `NodeManager` should be to have a set of different apis for the different use cases,
 so that:
 
- - those features can be instantiated from the code directly (without having to use a request/response mode)
- - they don't all share their implementation in the same struct but have implementations supporting only their interface
- - the current `NodeManager` only supports the CLI request/response interaction: interpret commands, decode data, call other apis and make responses
+ - those features can be instantiated from the code directly, outside of the `NodeManager` (and without having to use a request/response mode)
+ - they don't all share their implementation in the same struct but have distinct implementations supporting only their interface
+ - the current `NodeManager` only supports the CLI request/response interaction:
+   - interpret commands
+   - decode data
+   - all other apis
+   - make responses
 
 A more detailled analysis would be required to know exactly what is the best slicing of the `NodeManager` into several apis.
 For example, there seems to be a need to create a component dedicated to the secure sending of requests to the Ockam Orchestrator
 in order to deal with spaces, projects, etc...
 
-This can all be done incrementally, by progressively extracting functionalities off the `NodeManager`.
+Refactoring 1
+-------------
+
+The overall `NodeManager` refactoring can all be done incrementally, by progressively extracting functionalities off it.
 For example we can start by focusing on one part that is possibly the easiest to refactor: policies management.
 We need a component with the following interface:
+```rust
+  fn add_policy(resource: Resource, action: Action, policy: Policy) -> Result<()>
+  fn list_policies(resource: Resource) -> PolicyList
+  fn get_policy(resource: Resource, action: Action) -> Result<Option<Policy>>
+  fn delete_policy(resource: Resource, action: Action) -> Result<()>
+```
 
-  - fn add_policy(resource: Resource, action: Action, policy: Policy) -> Result<()>
-  - fn list_policies(resource: Resource) -> PolicyList
-  - fn get_policy(resource: Resource, action: Action) -> Result<Option<Policy>>
-  - fn delete_policy(resource: Resource, action: Action) -> Result<()>
+With this component we can:
 
-You will notice a few things:
-
-  - this component does not deal with the decoding of the input policy in `add_policy`
-  - this component does not deal with the creation of a response with the appropriate error code (with a `ResponseBuilder`) and the return of the request id
-  - this component does not deal with the encoding of the returned `Policy` in `get_policy` for example
-
-This means that:
-
-  - we can get more reuse out of the policy management feature when we wish to access policies directly from rust code
-  - we can fully hide the fact that the implementation is using a `LmdbStorage` and just access a `Policies` trait from the rest of the code
+  - get more reuse out of the policy management feature when we wish to access/store policies directly from rust code
+  - fully hide the fact that the implementation is using a `LmdbStorage` and just access a trait from the rest of the code
   - we can provide an in-memory implementation of this functionality with the exact same signature for testing
+
+There is actually a trait with almost that exact signature in the opam_abac crate: `PolicyStorage`.
+The proposed initial refactoring consists in:
+
+ - using a `Policy` type in that trait instead of exposing the fact that currently a `Policy` is implemented using a
+   boolean expression with variables (`Expr`)
+
+ - use that trait in the `NodeManager` so that in becomes possible to create a `NodeManager` with the in-memory
+   implementation of `PolicyStorage`
