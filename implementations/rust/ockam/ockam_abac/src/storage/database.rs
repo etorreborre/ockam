@@ -14,25 +14,6 @@ use ockam_node::tokio::task::{self};
 use std::borrow::Cow;
 use tracing as log;
 
-#[clonable]
-#[async_trait]
-pub trait PolicyStorage: Debug + Send + Sync + Clone + 'static {
-    async fn get_policy(&self, r: &Resource, a: &Action) -> Result<Option<Policy>>;
-    async fn set_policy(&self, r: &Resource, a: &Action, c: &Policy) -> Result<()>;
-    async fn del_policy(&self, r: &Resource, a: &Action) -> Result<()>;
-    async fn policies(&self, r: &Resource) -> Result<PolicyList>;
-}
-
-/// Policy storage entry.
-///
-/// Used instead of storing plain `Policy` values to allow for additional
-/// metadata, versioning, etc.
-#[derive(Debug, Encode, Decode)]
-#[rustfmt::skip]
-struct PolicyEntry<'a> {
-    #[b(0)] policy: Cow<'a, Policy>
-}
-
 #[async_trait]
 impl PolicyStorage for LmdbStorage {
     async fn get_policy(&self, r: &Resource, a: &Action) -> Result<Option<Policy>> {
@@ -90,4 +71,14 @@ impl PolicyStorage for LmdbStorage {
             .map_err(map_join_err)
             .map(|r| r.map(PolicyList::new))?
     }
+}
+
+/// Policy storage entry.
+///
+/// Used instead of storing plain `Policy` values to allow for additional
+/// metadata, versioning, etc.
+#[derive(Debug, Encode, Decode)]
+#[rustfmt::skip]
+struct PolicyEntry<'a> {
+    #[b(0)] policy: Cow<'a, Policy>
 }

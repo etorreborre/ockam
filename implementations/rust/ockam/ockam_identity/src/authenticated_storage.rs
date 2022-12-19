@@ -17,3 +17,6 @@ pub trait AuthenticatedStorage: AsyncTryClone + Send + Sync + 'static {
 
 /// In-memory impl
 pub mod mem;
+
+/// Database impl
+pub mod database;
