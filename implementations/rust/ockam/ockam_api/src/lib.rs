@@ -17,9 +17,6 @@ mod session;
 mod util;
 pub use util::*;
 
-#[cfg(feature = "lmdb")]
-pub mod lmdb;
-
 #[macro_use]
 extern crate tracing;
 

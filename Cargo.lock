@@ -2809,10 +2809,12 @@ name = "ockam_abac"
 version = "0.11.0"
 dependencies = [
  "either",
+ "lmdb-rkv",
  "minicbor",
  "objekt-clonable",
  "ockam_core",
  "ockam_identity",
+ "ockam_node",
  "once_cell",
  "quickcheck",
  "rand 0.8.5",
@@ -2989,6 +2991,7 @@ dependencies = [
  "group",
  "heapless",
  "hex",
+ "lmdb-rkv",
  "minicbor",
  "ockam_channel",
  "ockam_core",
@@ -3087,6 +3090,7 @@ version = "0.74.0"
 dependencies = [
  "futures 0.3.25",
  "heapless",
+ "lmdb-rkv",
  "minicbor",
  "ockam_core",
  "ockam_executor",

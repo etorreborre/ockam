@@ -47,6 +47,9 @@ pub mod api;
 /// Debugger
 pub mod debugger;
 
+/// Database
+pub mod database;
+
 mod async_drop;
 mod cancel;
 mod context;
