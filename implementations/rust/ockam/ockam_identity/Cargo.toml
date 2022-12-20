@@ -85,6 +85,7 @@ rand = { version = "0.8", default-features = false }
 tracing = { version = "0.1", default_features = false }
 hex = { version = "0.4", default-features = false }
 lmdb-rkv = "0.14.0"
+ambassador = "0.3.5"
 
 [dev-dependencies]
 ockam_transport_tcp = { path = "../ockam_transport_tcp" }
