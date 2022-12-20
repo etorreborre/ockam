@@ -13,6 +13,7 @@ use ockam_core::compat::{
 use ockam_core::errcode::{Kind, Origin};
 use ockam_core::AsyncTryClone;
 use ockam_identity::{Identity, IdentityIdentifier, PublicIdentity};
+use ockam_identity::authenticated_storage::AuthenticatedStorageImpl;
 use ockam_multiaddr::proto::{Project, Secure};
 use ockam_multiaddr::{MultiAddr, Protocol};
 use ockam_node::database::lmdb::LmdbStorage;
@@ -106,7 +107,7 @@ pub struct NodeManager {
     project_id: Option<String>,
     projects: Arc<BTreeMap<String, ProjectLookup>>,
     authorities: Option<Authorities>,
-    pub(crate) authenticated_storage: LmdbStorage,
+    pub(crate) authenticated_storage: AuthenticatedStorageImpl,
     pub(crate) registry: Registry,
     sessions: Arc<Mutex<Sessions>>,
     medic: JoinHandle<Result<(), ockam_core::Error>>,
@@ -226,7 +227,7 @@ impl NodeManager {
 
         let state = CliState::new()?.nodes.get(&general_options.node_name)?;
 
-        let authenticated_storage = LmdbStorage::new(&state.authenticated_storage_path()).await?;
+        let authenticated_storage = AuthenticatedStorageImpl::DatabaseImpl(LmdbStorage::new(&state.authenticated_storage_path()).await?);
         let policies_storage = LmdbStorage::new(&state.policies_storage_path()).await?;
 
         let vault = state.config.vault().await?;

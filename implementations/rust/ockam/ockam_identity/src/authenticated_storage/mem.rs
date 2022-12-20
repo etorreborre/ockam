@@ -12,7 +12,7 @@ use ockam_core::Result;
 type Attributes = BTreeMap<String, Vec<u8>>;
 
 /// Non-persistent table stored in RAM
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct InMemoryStorage {
     map: Arc<RwLock<BTreeMap<String, Attributes>>>,
 }
