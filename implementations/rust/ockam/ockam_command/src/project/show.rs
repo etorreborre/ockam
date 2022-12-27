@@ -23,34 +23,30 @@ pub struct ShowCommand {
 
 impl ShowCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 }
 
-async fn rpc(mut ctx: Context, (opts, cmd): (CommandGlobalOpts, ShowCommand)) -> crate::Result<()> {
-    run_impl(&mut ctx, opts, cmd).await
-}
-
-async fn run_impl(
-    ctx: &mut Context,
+async fn rpc(
+    ctx: Context,
     opts: CommandGlobalOpts,
     cmd: ShowCommand,
 ) -> crate::Result<()> {
     let controller_route = &cmd.cloud_opts.route();
-    let node_name = start_embedded_node(ctx, &opts).await?;
+    let node_name = start_embedded_node(&ctx, &opts).await?;
 
     // Lookup project
     let id = match config::get_project(&opts.config, &cmd.name) {
         Some(id) => id,
         None => {
-            config::refresh_projects(ctx, &opts, &node_name, &cmd.cloud_opts.route(), None).await?;
+            config::refresh_projects(&ctx, &opts, &node_name, &cmd.cloud_opts.route(), None).await?;
             config::get_project(&opts.config, &cmd.name)
                 .context(format!("Project '{}' does not exist", cmd.name))?
         }
     };
 
     // Send request
-    let mut rpc = RpcBuilder::new(ctx, &opts, &node_name).build();
+    let mut rpc = RpcBuilder::new(&ctx, &opts, &node_name).build();
     rpc.request(api::project::show(&id, controller_route))
         .await?;
     let project = rpc.parse_and_print_response::<Project>()?;

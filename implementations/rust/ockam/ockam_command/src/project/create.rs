@@ -37,26 +37,19 @@ pub struct CreateCommand {
 
 impl CreateCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 }
 
 async fn rpc(
-    mut ctx: Context,
-    (opts, cmd): (CommandGlobalOpts, CreateCommand),
-) -> crate::Result<()> {
-    run_impl(&mut ctx, opts, cmd).await
-}
-
-async fn run_impl(
-    ctx: &mut Context,
+    ctx: Context,
     opts: CommandGlobalOpts,
     cmd: CreateCommand,
 ) -> crate::Result<()> {
     let space_id = space::config::try_get_space(&opts.config, &cmd.space_name)
         .context(format!("Space '{}' does not exist", cmd.space_name))?;
-    let node_name = start_embedded_node(ctx, &opts).await?;
-    let mut rpc = RpcBuilder::new(ctx, &opts, &node_name).build();
+    let node_name = start_embedded_node(&ctx, &opts).await?;
+    let mut rpc = RpcBuilder::new(&ctx, &opts, &node_name).build();
     rpc.request(api::project::create(
         &cmd.project_name,
         &space_id,
@@ -66,7 +59,7 @@ async fn run_impl(
     .await?;
     let project = rpc.parse_response::<Project>()?;
     let project =
-        check_project_readiness(ctx, &opts, &cmd.cloud_opts, &node_name, None, project).await?;
+        check_project_readiness(&ctx, &opts, &cmd.cloud_opts, &node_name, None, project).await?;
     rpc.print_response(project)?;
     delete_embedded_node(&opts, rpc.node_name()).await;
     Ok(())

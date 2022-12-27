@@ -315,15 +315,15 @@ pub async fn stop_node(mut ctx: Context) -> Result<()> {
     Ok(())
 }
 
-pub fn node_rpc<A, F, Fut>(f: F, a: A)
+pub fn node_rpc<F, Fut, T>(f: F)
 where
-    A: Send + Sync + 'static,
-    F: FnOnce(Context, A) -> Fut + Send + Sync + 'static,
-    Fut: core::future::Future<Output = crate::Result<()>> + Send + 'static,
+  F: FnOnce(Context) -> Fut + Send + Sync + 'static,
+  Fut: core::future::Future<Output = crate::Result<T>> + Send + 'static,
+  T: Send + 'static,
 {
     let res = embedded_node(
-        |ctx, a| async {
-            let res = f(ctx, a).await;
+        |ctx| async {
+            let res = f(ctx).await;
             if let Err(e) = res {
                 error!(%e);
                 eprintln!("{e:?}");
@@ -331,7 +331,6 @@ where
             }
             Ok(())
         },
-        a,
     );
     if let Err(e) = res {
         eprintln!("Ockam node failed: {e}");
@@ -339,10 +338,9 @@ where
     }
 }
 
-pub fn embedded_node<A, F, Fut, T>(f: F, a: A) -> crate::Result<T>
+pub fn embedded_node<F, Fut, T>(f: F) -> crate::Result<T>
 where
-    A: Send + Sync + 'static,
-    F: FnOnce(Context, A) -> Fut + Send + Sync + 'static,
+    F: FnOnce(Context) -> Fut + Send + Sync + 'static,
     Fut: core::future::Future<Output = crate::Result<T>> + Send + 'static,
     T: Send + 'static,
 {
@@ -352,11 +350,12 @@ where
             .new_detached(Address::random_local())
             .await
             .expect("Embedded node child ctx can't be created");
-        let r = f(child_ctx, a).await;
+        let r = f(child_ctx).await;
         stop_node(ctx).await.unwrap();
         r
     })?
 }
+
 
 pub fn embedded_node_that_is_not_stopped<A, F, Fut, T>(f: F, a: A) -> crate::Result<T>
 where

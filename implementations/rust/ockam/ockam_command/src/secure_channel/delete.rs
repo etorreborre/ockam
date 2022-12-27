@@ -30,7 +30,7 @@ pub struct DeleteCommand {
 
 impl DeleteCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 
     // Read the `at` argument and return node name
@@ -140,7 +140,7 @@ fn parse_address(input: &str) -> core::result::Result<Address, AddressParseError
     Address::from_str(&buf)
 }
 
-async fn rpc(ctx: Context, (options, command): (CommandGlobalOpts, DeleteCommand)) -> Result<()> {
+async fn rpc(ctx: Context, options: CommandGlobalOpts, command: DeleteCommand) -> Result<()> {
     let at = &command.parse_at_node();
     let address = &command.address;
 

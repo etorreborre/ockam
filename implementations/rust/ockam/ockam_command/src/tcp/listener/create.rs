@@ -25,13 +25,14 @@ pub struct TCPListenerNodeOpts {
 
 impl CreateCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(run_impl, (options, self))
+        node_rpc(|ctx| rpc(ctx, options, self))
     }
 }
 
-async fn run_impl(
+async fn rpc(
     ctx: ockam::Context,
-    (opts, cmd): (CommandGlobalOpts, CreateCommand),
+    opts: CommandGlobalOpts,
+    cmd: CreateCommand,
 ) -> crate::Result<()> {
     let node_name = extract_address_value(&cmd.node_opts.at)?;
     let mut rpc = Rpc::background(&ctx, &opts, &node_name)?;

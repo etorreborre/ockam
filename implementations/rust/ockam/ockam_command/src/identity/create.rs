@@ -28,13 +28,13 @@ pub struct CreateCommand {
 
 impl CreateCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(run_impl, (options, self))
+        node_rpc(|ctx| run_impl(ctx, options, self))
     }
 }
 
 async fn run_impl(
     ctx: Context,
-    (options, cmd): (CommandGlobalOpts, CreateCommand),
+    options: CommandGlobalOpts, cmd: CreateCommand,
 ) -> crate::Result<()> {
     let vault_config = if let Some(vault_name) = cmd.vault {
         options.state.vaults.get(&vault_name)?.config

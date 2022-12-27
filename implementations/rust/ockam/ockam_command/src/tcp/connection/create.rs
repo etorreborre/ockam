@@ -36,7 +36,7 @@ pub struct CreateCommand {
 
 impl CreateCommand {
     pub fn run(self, opts: CommandGlobalOpts) {
-        node_rpc(run_impl, (opts, self))
+        node_rpc(|ctx| rpc(ctx, opts, self))
     }
 
     fn print_output(
@@ -87,9 +87,10 @@ impl CreateCommand {
     }
 }
 
-async fn run_impl(
+async fn rpc(
     ctx: ockam::Context,
-    (options, command): (CommandGlobalOpts, CreateCommand),
+    options: CommandGlobalOpts,
+    command: CreateCommand,
 ) -> crate::Result<()> {
     let node_name = extract_address_value(&command.node_opts.from)?;
     let mut rpc = Rpc::background(&ctx, &options, &node_name)?;

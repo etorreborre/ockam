@@ -41,10 +41,7 @@ pub struct EnrollCommand {
 
 impl EnrollCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(
-            |ctx, (opts, cmd)| Runner::new(ctx, opts, cmd).run(),
-            (options, self),
-        );
+        node_rpc(|ctx| Runner::new(ctx, options, self).run());
     }
 
     fn attributes(&self) -> Result<HashMap<String, String>> {

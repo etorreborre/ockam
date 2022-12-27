@@ -74,7 +74,7 @@ pub struct CreateCommand {
 
 impl CreateCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 
     pub fn check_credential(&self) -> Option<bool> {
@@ -88,7 +88,7 @@ impl CreateCommand {
     }
 }
 
-async fn rpc(ctx: Context, (opts, mut cmd): (CommandGlobalOpts, CreateCommand)) -> Result<()> {
+async fn rpc(ctx: Context, opts: CommandGlobalOpts,  mut cmd: CreateCommand) -> Result<()> {
     cmd.to = process_multi_addr(&cmd.to, &opts.state)?;
 
     // Check if the port is used by some other services or process

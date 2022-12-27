@@ -25,7 +25,7 @@ pub struct ShowCommand {
 
 impl ShowCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx,options, self));
     }
 
     // Read the `at` argument and return node name
@@ -34,7 +34,7 @@ impl ShowCommand {
     }
 }
 
-async fn rpc(ctx: Context, (options, command): (CommandGlobalOpts, ShowCommand)) -> Result<()> {
+async fn rpc(ctx: Context, options: CommandGlobalOpts, command: ShowCommand) -> Result<()> {
     let at = &command.parse_at_node();
     let address = &command.address;
 

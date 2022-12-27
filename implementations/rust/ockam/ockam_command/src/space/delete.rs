@@ -20,23 +20,17 @@ pub struct DeleteCommand {
 
 impl DeleteCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 }
 
-async fn rpc(
-    mut ctx: Context,
-    (opts, cmd): (CommandGlobalOpts, DeleteCommand),
-) -> crate::Result<()> {
-    run_impl(&mut ctx, opts, cmd).await
-}
 
-async fn run_impl(
-    ctx: &mut Context,
+async fn rpc(
+    ctx: Context,
     opts: CommandGlobalOpts,
     cmd: DeleteCommand,
 ) -> crate::Result<()> {
-    let node_name = start_embedded_node(ctx, &opts).await?;
+    let node_name = start_embedded_node(&ctx, &opts).await?;
     let controller_route = &cmd.cloud_opts.route();
 
     // Try to remove from config, in case the space was removed from the cloud but not from the config file.
@@ -44,7 +38,7 @@ async fn run_impl(
 
     // Lookup space
     let id =
-        match config::get_space(ctx, &opts, &cmd.name, &node_name, &cmd.cloud_opts.route()).await {
+        match config::get_space(&ctx, &opts, &cmd.name, &node_name, &cmd.cloud_opts.route()).await {
             Ok(id) => id,
             // If the space is not found in the lookup, then it must not exist in the cloud, so we exit the command.
             Err(_) => {
@@ -53,7 +47,7 @@ async fn run_impl(
         };
 
     // Send request
-    let mut rpc = RpcBuilder::new(ctx, &opts, &node_name).build();
+    let mut rpc = RpcBuilder::new(&ctx, &opts, &node_name).build();
     rpc.request(api::space::delete(&id, controller_route))
         .await?;
     rpc.is_ok()?;

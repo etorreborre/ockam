@@ -60,7 +60,7 @@ async fn rpc(
         rpc.print_response::<Credential<'_>>()?;
         Ok(())
     }
-    let result = go(&mut ctx, &opts, &cmd).await;
+    let result = go(ctx, &opts, &cmd).await;
     stop_node(ctx).await?;
     result
 }

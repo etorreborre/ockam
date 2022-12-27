@@ -31,23 +31,16 @@ pub struct AddEnrollerCommand {
 
 impl AddEnrollerCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 }
 
 async fn rpc(
-    mut ctx: Context,
-    (opts, cmd): (CommandGlobalOpts, AddEnrollerCommand),
-) -> crate::Result<()> {
-    run_impl(&mut ctx, opts, cmd).await
-}
-
-async fn run_impl(
-    ctx: &mut Context,
+    ctx: Context,
     opts: CommandGlobalOpts,
     cmd: AddEnrollerCommand,
 ) -> crate::Result<()> {
-    let mut rpc = Rpc::embedded(ctx, &opts).await?;
+    let mut rpc = Rpc::embedded(&ctx, &opts).await?;
     rpc.request(api::project::add_enroller(&cmd)).await?;
     rpc.parse_and_print_response::<Enroller>()?;
     delete_embedded_node(&opts, rpc.node_name()).await;

@@ -2,7 +2,6 @@ use crate::util::node_rpc;
 use crate::CommandGlobalOpts;
 use crate::Result;
 use clap::Args;
-use ockam::Context;
 use ockam_api::cli_state;
 use rand::prelude::random;
 
@@ -22,11 +21,11 @@ pub struct CreateCommand {
 
 impl CreateCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(run_impl, (options, self))
+        node_rpc(|_ctx| run_impl(options, self))
     }
 }
 
-async fn run_impl(_ctx: Context, (options, cmd): (CommandGlobalOpts, CreateCommand)) -> Result<()> {
+async fn run_impl(options: CommandGlobalOpts, cmd: CreateCommand) -> Result<()> {
     let path = cli_state::VaultConfig::fs_path(&cmd.name, cmd.path)?;
     let config = cli_state::VaultConfig::fs(path, cmd.aws_kms)?;
     options

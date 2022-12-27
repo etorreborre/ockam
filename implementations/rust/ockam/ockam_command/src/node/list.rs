@@ -13,14 +13,11 @@ pub struct ListCommand {}
 
 impl ListCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(run_impl, (options, self))
+        node_rpc(|ctx| run_impl(ctx, options))
     }
 }
 
-async fn run_impl(
-    ctx: Context,
-    (opts, _cmd): (CommandGlobalOpts, ListCommand),
-) -> crate::Result<()> {
+async fn run_impl(ctx: Context, opts: CommandGlobalOpts) -> crate::Result<()> {
     // Before printing node states we verify them.
     // We send a QueryStatus request to every node on
     // record. If the response yields a different pid to the

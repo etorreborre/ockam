@@ -36,20 +36,13 @@ pub struct SecureChannelListenerNodeOpts {
 
 impl CreateCommand {
     pub fn run(self, opts: CommandGlobalOpts) {
-        node_rpc(rpc, (opts, self));
+        node_rpc(|ctx| rpc(ctx, opts, self));
     }
 }
 
-async fn rpc(ctx: Context, (opts, cmd): (CommandGlobalOpts, CreateCommand)) -> crate::Result<()> {
-    run_impl(&ctx, (opts, cmd)).await
-}
-
-async fn run_impl(
-    ctx: &Context,
-    (opts, cmd): (CommandGlobalOpts, CreateCommand),
-) -> crate::Result<()> {
+async fn rpc(ctx: Context, opts: CommandGlobalOpts, cmd: CreateCommand) -> crate::Result<()> {
     let node = extract_address_value(&cmd.node_opts.at)?;
-    let mut rpc = Rpc::background(ctx, &opts, &node)?;
+    let mut rpc = Rpc::background(&ctx, &opts, &node)?;
     let req = Request::post("/node/secure_channel_listener").body(
         CreateSecureChannelListenerRequest::new(&cmd.address, cmd.authorized_identifiers),
     );

@@ -44,7 +44,7 @@ pub struct CreateCommand {
 
 impl CreateCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 
     // Read the `to` argument and return a MultiAddr
@@ -150,7 +150,7 @@ impl CreateCommand {
     }
 }
 
-async fn rpc(ctx: Context, (opts, cmd): (CommandGlobalOpts, CreateCommand)) -> Result<()> {
+async fn rpc(ctx: Context, opts: CommandGlobalOpts, cmd: CreateCommand) -> Result<()> {
     let tcp = TcpTransport::create(&ctx).await?;
 
     let config = &opts.config.lookup();

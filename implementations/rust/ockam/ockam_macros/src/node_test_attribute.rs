@@ -33,7 +33,7 @@ use crate::internals::{ast, ast::FnVariable, check, ctx::Context, symbol::*};
 ///     executor
 ///         .execute(async move {
 ///             match AssertUnwindSafe(async {
-///                 match timeout(Duration::from_millis(100u64), _my_test(&mut ctx)).await {
+///                 match timeout(Duration::from_millis(100u64), _my_test(ctx)).await {
 ///                     Ok(r) => r,
 ///                     Err(_) => Err(Error::new(Origin::Node, Kind::Timeout, "Test timed out")),
 ///                 }

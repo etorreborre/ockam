@@ -17,20 +17,16 @@ pub struct ListCommand {
 
 impl ListCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 }
 
-async fn rpc(mut ctx: Context, (opts, cmd): (CommandGlobalOpts, ListCommand)) -> crate::Result<()> {
-    run_impl(&mut ctx, opts, cmd).await
-}
-
-async fn run_impl(
-    ctx: &mut Context,
+async fn rpc(
+    ctx: Context,
     opts: CommandGlobalOpts,
     cmd: ListCommand,
 ) -> crate::Result<()> {
-    let mut rpc = Rpc::embedded(ctx, &opts).await?;
+    let mut rpc = Rpc::embedded(&ctx, &opts).await?;
     rpc.request(api::space::list(&cmd.cloud_opts.route()))
         .await?;
     let spaces = rpc.parse_and_print_response::<Vec<Space>>()?;

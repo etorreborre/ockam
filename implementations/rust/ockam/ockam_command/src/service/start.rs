@@ -83,35 +83,28 @@ fn authenticator_default_addr() -> String {
 
 impl StartCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 }
 
 async fn rpc(
-    mut ctx: Context,
-    (opts, cmd): (CommandGlobalOpts, StartCommand),
-) -> crate::Result<()> {
-    run_impl(&mut ctx, opts, cmd).await
-}
-
-async fn run_impl(
-    ctx: &mut Context,
+    ctx: Context,
     opts: CommandGlobalOpts,
     cmd: StartCommand,
 ) -> crate::Result<()> {
     let node_name = &cmd.node_opts.api_node;
-    let tcp = TcpTransport::create(ctx).await?;
+    let tcp = TcpTransport::create(&ctx).await?;
     match cmd.create_subcommand {
         StartSubCommand::Vault { addr, .. } => {
-            start_vault_service(ctx, &opts, node_name, &addr, Some(&tcp)).await?
+            start_vault_service(&ctx, &opts, node_name, &addr, Some(&tcp)).await?
         }
         StartSubCommand::Identity { addr, .. } => {
-            start_identity_service(ctx, &opts, node_name, &addr, Some(&tcp)).await?
+            start_identity_service(&ctx, &opts, node_name, &addr, Some(&tcp)).await?
         }
         StartSubCommand::Authenticated { addr, .. } => {
             let req = api::start_authenticated_service(&addr);
             start_service_impl(
-                ctx,
+                &ctx,
                 &opts,
                 node_name,
                 &addr,
@@ -122,11 +115,11 @@ async fn run_impl(
             .await?
         }
         StartSubCommand::Verifier { addr, .. } => {
-            start_verifier_service(ctx, &opts, node_name, &addr, Some(&tcp)).await?
+            start_verifier_service(&ctx, &opts, node_name, &addr, Some(&tcp)).await?
         }
         StartSubCommand::Credentials { addr, oneway, .. } => {
             let req = api::start_credentials_service(&addr, oneway);
-            start_service_impl(ctx, &opts, node_name, &addr, "Credentials", req, Some(&tcp)).await?
+            start_service_impl(&ctx, &opts, node_name, &addr, "Credentials", req, Some(&tcp)).await?
         }
         StartSubCommand::Authenticator {
             addr,
@@ -135,7 +128,7 @@ async fn run_impl(
             ..
         } => {
             start_authenticator_service(
-                ctx,
+                &ctx,
                 &opts,
                 node_name,
                 &addr,

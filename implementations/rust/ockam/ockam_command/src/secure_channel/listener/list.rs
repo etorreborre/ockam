@@ -19,20 +19,16 @@ pub struct ListCommand {
 
 impl ListCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 }
 
-async fn rpc(mut ctx: Context, (opts, cmd): (CommandGlobalOpts, ListCommand)) -> crate::Result<()> {
-    run_impl(&mut ctx, opts, cmd).await
-}
-
-async fn run_impl(
-    ctx: &mut Context,
+async fn rpc(
+    ctx: Context,
     opts: CommandGlobalOpts,
     cmd: ListCommand,
 ) -> crate::Result<()> {
-    let mut rpc = Rpc::background(ctx, &opts, &cmd.node_opts.api_node)?;
+    let mut rpc = Rpc::background(&ctx, &opts, &cmd.node_opts.api_node)?;
     rpc.request(api::list_secure_channel_listener()).await?;
     let res = rpc.parse_response::<Vec<String>>()?;
 

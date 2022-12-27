@@ -28,7 +28,7 @@ pub struct ListCommand {
 
 impl ListCommand {
     pub fn run(self, opts: CommandGlobalOpts) {
-        node_rpc(rpc, (opts, self));
+        node_rpc(|ctx| rpc(ctx, opts, self));
     }
 
     fn print_output(
@@ -122,10 +122,7 @@ fn has_plain_stderr(options: &CommandGlobalOpts) -> bool {
         && options.global_args.output_format == OutputFormat::Plain
 }
 
-async fn rpc(
-    ctx: Context,
-    (options, command): (CommandGlobalOpts, ListCommand),
-) -> crate::Result<()> {
+async fn rpc(ctx: Context, options: CommandGlobalOpts, command: ListCommand) -> crate::Result<()> {
     // We need this TCPTransport handle to ensure that we are using the same transport across
     // multiple RPC calls. Creating a RPC instance without explicit transport results in a router
     // instance being registered for the same transport type multiple times which is not allowed

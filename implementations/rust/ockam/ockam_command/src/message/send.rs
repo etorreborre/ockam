@@ -38,58 +38,49 @@ pub struct SendCommand {
 
 impl SendCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self))
+        node_rpc(|ctx| rpc(ctx, options, self))
     }
 }
 
-async fn rpc(mut ctx: Context, (opts, cmd): (CommandGlobalOpts, SendCommand)) -> Result<()> {
-    async fn go(ctx: &mut Context, opts: &CommandGlobalOpts, cmd: SendCommand) -> Result<()> {
-        // Process `--to` Multiaddr
-        let (to, meta) =
-            clean_multiaddr(&cmd.to, &opts.state).context("Argument '--to' is invalid")?;
-
-        // Setup environment depending on whether we are sending the message from an embedded node or a background node
-        let (api_node, tcp) = if let Some(node) = &cmd.from {
-            let api_node = extract_address_value(node)?;
-            let tcp = TcpTransport::create(ctx).await?;
-            (api_node, Some(tcp))
-        } else {
-            let api_node = start_embedded_node(ctx, opts).await?;
-            (api_node, None)
-        };
-
-        // Replace `/project/<name>` occurrences with their respective secure channel addresses
-        let projects_sc = crate::project::util::get_projects_secure_channels_from_config_lookup(
-            ctx,
-            opts,
-            &meta,
-            &cmd.cloud_opts.route(),
-            &api_node,
-            tcp.as_ref(),
-            CredentialExchangeMode::None,
-        )
-        .await?;
-        let to = crate::project::util::clean_projects_multiaddr(to, projects_sc)?;
-
-        // Send request
-        let mut rpc = RpcBuilder::new(ctx, opts, &api_node)
-            .tcp(tcp.as_ref())?
-            .build();
-        rpc.request(req(&to, &cmd.message)).await?;
-        let res = rpc.parse_response::<Vec<u8>>()?;
-        println!(
-            "{}",
-            String::from_utf8(res).context("Received content is not a valid utf8 string")?
-        );
-
-        // only delete node in case 'from' is empty and embedded node was started before
-        if cmd.from.is_none() {
-            delete_embedded_node(opts, rpc.node_name()).await;
-        }
-
-        Ok(())
+async fn rpc(ctx: Context, opts: CommandGlobalOpts, cmd: SendCommand) -> Result<()> {
+    // Process `--to` Multiaddr
+    let (to, meta) = clean_multiaddr(&cmd.to, &opts.state).context("Argument '--to' is invalid")?;
+    // Setup environment depending on whether we are sending the message from an embedded node or a background node
+    let (api_node, tcp) = if let Some(node) = &cmd.from {
+        let api_node = extract_address_value(node)?;
+        let tcp = TcpTransport::create(&ctx).await?;
+        (api_node, Some(tcp))
+    } else {
+        let api_node = start_embedded_node(&ctx, &opts).await?;
+        (api_node, None)
+    };
+    // Replace `/project/<name>` occurrences with their respective secure channel addresses
+    let projects_sc = crate::project::util::get_projects_secure_channels_from_config_lookup(
+        &ctx,
+        &opts,
+        &meta,
+        &cmd.cloud_opts.route(),
+        &api_node,
+        tcp.as_ref(),
+        CredentialExchangeMode::None,
+    )
+    .await?;
+    let to = crate::project::util::clean_projects_multiaddr(to, projects_sc)?;
+    // Send request
+    let mut rpc = RpcBuilder::new(&ctx, &opts, &api_node)
+        .tcp(tcp.as_ref())?
+        .build();
+    rpc.request(req(&to, &cmd.message)).await?;
+    let res = rpc.parse_response::<Vec<u8>>()?;
+    println!(
+        "{}",
+        String::from_utf8(res).context("Received content is not a valid utf8 string")?
+    );
+    // only delete node in case 'from' is empty and embedded node was started before
+    if cmd.from.is_none() {
+        delete_embedded_node(&opts, rpc.node_name()).await;
     }
-    go(&mut ctx, &opts, cmd).await
+    Ok(())
 }
 
 pub(crate) fn req<'a>(to: &'a MultiAddr, message: &'a str) -> RequestBuilder<'a, SendMessage<'a>> {

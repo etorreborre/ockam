@@ -123,14 +123,11 @@ pub enum ConfigureAddonCommand {
 
 impl AddonCommand {
     pub fn run(self, opts: CommandGlobalOpts) {
-        node_rpc(run_impl, (opts, self));
+        node_rpc(|ctx| run_impl(ctx, opts, self));
     }
 }
 
-async fn run_impl(
-    ctx: Context,
-    (opts, cmd): (CommandGlobalOpts, AddonCommand),
-) -> crate::Result<()> {
+async fn run_impl(ctx: Context, opts: CommandGlobalOpts, cmd: AddonCommand) -> crate::Result<()> {
     let controller_route = &cmd.cloud_opts.route();
     let mut rpc = Rpc::embedded(&ctx, &opts).await?;
 

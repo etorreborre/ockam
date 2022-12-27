@@ -29,13 +29,14 @@ pub struct ShowCommand {
 
 impl ShowCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(run_impl, (options, self))
+        node_rpc(|ctx| run_impl(ctx, options, self))
     }
 }
 
 async fn run_impl(
     ctx: ockam::Context,
-    (opts, cmd): (CommandGlobalOpts, ShowCommand),
+    opts: CommandGlobalOpts,
+    cmd: ShowCommand,
 ) -> crate::Result<()> {
     let node_name = &cmd.node_name;
     let tcp = TcpTransport::create(&ctx).await?;

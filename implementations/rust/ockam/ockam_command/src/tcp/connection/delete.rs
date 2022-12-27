@@ -19,12 +19,13 @@ pub struct DeleteCommand {
 }
 impl DeleteCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(run_impl, (options, self))
+        node_rpc(|ctx| rtc(ctx, options, self))
     }
 }
-async fn run_impl(
+async fn rtc(
     ctx: ockam::Context,
-    (opts, cmd): (CommandGlobalOpts, DeleteCommand),
+    opts: CommandGlobalOpts,
+    cmd: DeleteCommand,
 ) -> crate::Result<()> {
     let node_name = extract_address_value(&cmd.node_opts.api_node)?;
     let mut rpc = Rpc::background(&ctx, &opts, &node_name)?;

@@ -35,23 +35,16 @@ impl CreateCommand {
             "{}",
             "To learn more about production ready spaces in Ockam Orchestrator, contact us at: hello@ockam.io".light_magenta()
         );
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 }
 
 async fn rpc(
-    mut ctx: Context,
-    (opts, cmd): (CommandGlobalOpts, CreateCommand),
-) -> crate::Result<()> {
-    run_impl(&mut ctx, opts, cmd).await
-}
-
-async fn run_impl(
-    ctx: &mut Context,
+    ctx: Context,
     opts: CommandGlobalOpts,
     cmd: CreateCommand,
 ) -> crate::Result<()> {
-    let mut rpc = Rpc::embedded(ctx, &opts).await?;
+    let mut rpc = Rpc::embedded(&ctx, &opts).await?;
     rpc.request(api::space::create(&cmd)).await?;
     let space = rpc.parse_and_print_response::<Space>()?;
     config::set_space(&opts.config, &space)?;

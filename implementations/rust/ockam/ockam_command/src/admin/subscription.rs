@@ -134,13 +134,13 @@ enum SubscriptionUpdateSubcommand {
 
 impl SubscriptionCommand {
     pub fn run(self, opts: CommandGlobalOpts) {
-        node_rpc(run_impl, (opts, self));
+        node_rpc(|ctx| run_impl(ctx, opts, self));
     }
 }
 
 async fn run_impl(
     ctx: Context,
-    (opts, cmd): (CommandGlobalOpts, SubscriptionCommand),
+    opts: CommandGlobalOpts, cmd: SubscriptionCommand,
 ) -> crate::Result<()> {
     let controller_route = &cmd.cloud_opts.route();
     let mut rpc = Rpc::embedded(&ctx, &opts).await?;

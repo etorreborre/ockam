@@ -17,23 +17,16 @@ pub struct GetCredentialCommand {
 
 impl GetCredentialCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 }
 
 async fn rpc(
-    mut ctx: Context,
-    (opts, cmd): (CommandGlobalOpts, GetCredentialCommand),
-) -> crate::Result<()> {
-    run_impl(&mut ctx, opts, cmd).await
-}
-
-async fn run_impl(
-    ctx: &mut Context,
+    ctx: Context,
     opts: CommandGlobalOpts,
     cmd: GetCredentialCommand,
 ) -> crate::Result<()> {
-    let mut rpc = Rpc::background(ctx, &opts, &cmd.node_opts.api_node)?;
+    let mut rpc = Rpc::background(&ctx, &opts, &cmd.node_opts.api_node)?;
     rpc.request(api::credentials::get_credential(cmd.overwrite))
         .await?;
     Ok(())

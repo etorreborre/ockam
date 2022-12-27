@@ -36,11 +36,11 @@ pub struct EnrollCommand {
 
 impl EnrollCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 }
 
-async fn rpc(ctx: Context, (opts, cmd): (CommandGlobalOpts, EnrollCommand)) -> Result<()> {
+async fn rpc(ctx: Context, opts: CommandGlobalOpts, cmd: EnrollCommand) -> Result<()> {
     run_impl(&ctx, opts, cmd).await
 }
 

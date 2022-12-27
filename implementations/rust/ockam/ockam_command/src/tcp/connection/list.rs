@@ -17,13 +17,14 @@ pub struct ListCommand {
 
 impl ListCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(run_impl, (options, self))
+        node_rpc(|ctx| rpc(ctx, options, self))
     }
 }
 
-async fn run_impl(
+async fn rpc(
     ctx: ockam::Context,
-    (options, command): (CommandGlobalOpts, ListCommand),
+    options: CommandGlobalOpts,
+    command: ListCommand,
 ) -> crate::Result<()> {
     let node_name = extract_address_value(&command.node_opts.api_node)?;
     let mut rpc = Rpc::background(&ctx, &options, &node_name)?;

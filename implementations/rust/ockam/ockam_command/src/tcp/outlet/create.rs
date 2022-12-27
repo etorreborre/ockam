@@ -67,7 +67,7 @@ pub struct CreateCommand {
 
 impl CreateCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(run_impl, (options, self))
+        node_rpc(|ctx| rpc(ctx, options, self))
     }
 
     pub fn check_credential(&self) -> Option<bool> {
@@ -81,9 +81,10 @@ impl CreateCommand {
     }
 }
 
-pub async fn run_impl(
+pub async fn rpc(
     ctx: Context,
-    (options, cmd): (CommandGlobalOpts, CreateCommand),
+    options: CommandGlobalOpts,
+    cmd: CreateCommand,
 ) -> crate::Result<()> {
     let node = extract_address_value(&cmd.at)?;
     let mut rpc = Rpc::background(&ctx, &options, &node)?;

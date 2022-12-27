@@ -64,12 +64,12 @@ pub enum PolicySubcommand {
 
 impl PolicyCommand {
     pub fn run(self, opts: CommandGlobalOpts) {
-        node_rpc(rpc, (opts, self))
+        node_rpc(|ctx| rpc(ctx, opts, self))
     }
 }
 
 #[rustfmt::skip]
-async fn rpc(ctx: Context, (opts, cmd): (CommandGlobalOpts, PolicyCommand)) -> Result<()> {
+async fn rpc(ctx: Context, opts: CommandGlobalOpts,cmd: PolicyCommand) -> Result<()> {
     match cmd.subcommand {
         PolicySubcommand::Set { at, resource, action, policy } => {
             let node = extract_address_value(&at)?;

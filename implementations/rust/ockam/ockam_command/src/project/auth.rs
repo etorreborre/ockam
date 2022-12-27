@@ -35,14 +35,11 @@ pub struct AuthCommand {
 
 impl AuthCommand {
     pub fn run(self, opts: CommandGlobalOpts) {
-        node_rpc(run_impl, (opts, self));
+        node_rpc(|ctx| run_impl(ctx, opts, self));
     }
 }
 
-async fn run_impl(
-    ctx: Context,
-    (opts, cmd): (CommandGlobalOpts, AuthCommand),
-) -> crate::Result<()> {
+async fn run_impl(ctx: Context, opts: CommandGlobalOpts, cmd: AuthCommand) -> crate::Result<()> {
     let node_name = start_embedded_node(&ctx, &opts).await?;
 
     // Read (okta and authority) project parameters from project.json

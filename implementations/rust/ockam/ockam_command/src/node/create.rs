@@ -121,7 +121,7 @@ impl CreateCommand {
             }
         } else {
             // Create a new node running in the background (i.e. another, new OS process)
-            node_rpc(run_impl, (options, self))
+            node_rpc(|ctx| run_impl(ctx, options, self))
         }
     }
 
@@ -140,10 +140,7 @@ impl CreateCommand {
     }
 }
 
-async fn run_impl(
-    ctx: Context,
-    (opts, cmd): (CommandGlobalOpts, CreateCommand),
-) -> crate::Result<()> {
+async fn run_impl(ctx: Context, opts: CommandGlobalOpts, cmd: CreateCommand) -> crate::Result<()> {
     let node_name = &cmd.node_name;
     if cmd.child_process {
         return Err(crate::Error::new(

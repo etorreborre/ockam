@@ -26,26 +26,15 @@ pub struct DeleteCommand {
 
 impl DeleteCommand {
     pub fn run(self, options: CommandGlobalOpts) {
-        node_rpc(rpc, (options, self));
+        node_rpc(|ctx| rpc(ctx, options, self));
     }
 }
 
-async fn rpc(
-    mut ctx: Context,
-    (opts, cmd): (CommandGlobalOpts, DeleteCommand),
-) -> crate::Result<()> {
-    run_impl(&mut ctx, opts, cmd).await
-}
-
-async fn run_impl(
-    ctx: &mut Context,
-    opts: CommandGlobalOpts,
-    cmd: DeleteCommand,
-) -> crate::Result<()> {
+async fn rpc(ctx: Context, opts: CommandGlobalOpts, cmd: DeleteCommand) -> crate::Result<()> {
     let space_id = space::config::try_get_space(&opts.config, &cmd.space_name)
         .context(format!("Space '{}' does not exist", cmd.space_name))?;
 
-    let node_name = start_embedded_node(ctx, &opts).await?;
+    let node_name = start_embedded_node(&ctx, &opts).await?;
     let controller_route = &cmd.cloud_opts.route();
 
     // Try to remove from config, in case the project was removed from the cloud but not from the config file.
@@ -57,7 +46,7 @@ async fn run_impl(
         None => {
             // The project is not in the config file.
             // Fetch all available projects from the cloud.
-            config::refresh_projects(ctx, &opts, &node_name, controller_route, None).await?;
+            config::refresh_projects(&ctx, &opts, &node_name, controller_route, None).await?;
 
             // If the project is not found in the lookup, then it must not exist in the cloud, so we exit the command.
             match config::get_project(&opts.config, &cmd.project_name) {
@@ -70,7 +59,7 @@ async fn run_impl(
     };
 
     // Send request
-    let mut rpc = RpcBuilder::new(ctx, &opts, &node_name).build();
+    let mut rpc = RpcBuilder::new(&ctx, &opts, &node_name).build();
     rpc.request(api::project::delete(
         &space_id,
         &project_id,

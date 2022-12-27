@@ -48,7 +48,7 @@ pub enum AuthenticatedSubcommand {
 
 impl AuthenticatedCommand {
     pub fn run(self) {
-        if let Err(e) = embedded_node(run_impl, self.subcommand) {
+        if let Err(e) = embedded_node(|ctx| run_impl(ctx, self.subcommand)) {
             eprintln!("Ockam node failed: {:?}", e,);
         }
     }
